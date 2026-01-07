@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://viktortown-ui.github.io/unitcalc/sitemap2.xml
+Sitemap: https://viktortown-ui.github.io/unitcalc/sitemap.xml

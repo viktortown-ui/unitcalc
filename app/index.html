@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор бизнеса - сколько нужно продавать</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Калькулятор Предпринимателя</h1>
+            <p class="subtitle">Сколько нужно продавать, чтобы не быть в минусе и зарабатывать</p>
+
+            <div class="topbar">
+                <div class="topbar-left">
+                    <span class="topbar-label">Профиль:</span>
+                    <select id="preset" class="topbar-select">
+                        <option value="custom">Свои цифры</option>
+                        <option value="marketplace">Маркетплейсы</option>
+                        <option value="services">Услуги</option>
+                    </select>
+                    <button id="apply_preset" class="btn">Применить</button>
+                    <span class="topbar-note">Пресет подставит типовые значения — потом подгони под себя.</span>
+                </div>
+                <div class="topbar-right">
+                    <button id="btn_export" class="btn-secondary">Экспорт</button>
+                    <button id="btn_import" class="btn-secondary">Импорт</button>
+                    <button id="btn_share" class="btn-secondary">Поделиться</button>
+                    <button id="btn_print" class="btn-secondary">Печать</button>
+                    <input type="file" id="import_file" accept="application/json" style="display:none" />
+                </div>
+            </div>
+
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-button active" data-tab="step1">Шаг 1: Одна продажа</button>
+            <button class="tab-button" data-tab="step2">Шаг 2: Обязательные расходы</button>
+            <button class="tab-button" data-tab="step3">Шаг 3: Цели</button>
+            <button class="tab-button" data-tab="treemap">🧩 Где течёт</button>
+            <button class="tab-button" data-tab="charts">📊 Графики</button>
+        </nav>
+
+        <!-- ШАГ 1: ОДНА ПРОДАЖА -->
+        <div id="step1" class="tab-content active">
+            <h2>Шаг 1: Сколько остаётся с одной продажи</h2>
+            
+            <div class="form-grid">
+                <div class="form-group price-slider-group">
+                    <label for="price">Цена товара/услуги (без доставки), ₽ <span class="tooltip" data-tooltip="Сколько платит клиент именно за товар/услугу. Доставку можно считать отдельно ниже.">?</span></label>
+                    <input type="number" id="price" min="0" step="0.01" placeholder="1000">
+                    <div class="slider-container">
+                        <input type="range" id="price_slider" min="0" max="200000" step="100" value="1000">
+                        <div class="slider-labels">
+                            <span>0</span>
+                            <span>200 000+</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="unit_cost">Сколько стоит товар/услуга (₽) <span class="tooltip" data-tooltip="Закуп, материалы, производство на 1 продажу">?</span></label>
+                    <input type="number" id="unit_cost" min="0" step="0.01" placeholder="400">
+                </div>
+
+                <div class="form-group">
+                    <label for="commissions_type">Комиссии с продажи <span class="tooltip" data-tooltip="Эквайринг, маркетплейс, площадка">?</span></label>
+                    <select id="commissions_type">
+                        <option value="fixed">Фиксированная сумма (₽)</option>
+                        <option value="percent">Процент от продажи (%)</option>
+                    </select>
+                    <input type="number" id="commissions" min="0" step="0.01" placeholder="50 или 3">
+                </div>
+
+                <div class="form-group">
+                    <label for="shipping">Доставка/логистика на 1 продажу (₽) <span class="tooltip" data-tooltip="Транспорт, курьер, почта">?</span></label>
+                    <input type="number" id="shipping" min="0" step="0.01" placeholder="150">
+                
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="shipping_transit">
+                        Доставку оплачивает клиент отдельно (не считаем как расход и не включаем в налог)
+                    </label>
+</div>
+
+                <div class="form-group">
+                    <label for="packing">Упаковка/расходники на 1 продажу (₽) <span class="tooltip" data-tooltip="Коробки, плёнка, стикеры">?</span></label>
+                    <input type="number" id="packing" min="0" step="0.01" placeholder="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="loss_pct">Потери (возвраты/брак/скидки) (%) <span class="tooltip" data-tooltip="Сколько теряешь из-за возвратов и брака (процент от цены)">?</span></label>
+                    <input type="number" id="loss_pct" min="0" max="100" step="0.1" placeholder="5">
+                </div>
+            </div>
+
+            <div class="marketplace-pro">
+                <h3>🏪 Маркетплейсы (доп. поля)</h3>
+                <p class="hint">Заполняй только если продаёшь через маркетплейсы (WB/Ozon и т.п.). Если не продаёшь — оставь нули.</p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="mp_fulfillment">Фулфилмент / сборка заказа (₽/продажу)</label>
+                        <input type="number" id="mp_fulfillment" min="0" step="0.01" placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mp_storage">Хранение / услуги площадки (₽/продажу)</label>
+                        <input type="number" id="mp_storage" min="0" step="0.01" placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mp_lastmile">Последняя миля / доставка МП (₽/продажу)</label>
+                        <input type="number" id="mp_lastmile" min="0" step="0.01" placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mp_discount_pct">Скидки/акции (потеря выручки) (%)</label>
+                        <input type="number" id="mp_discount_pct" min="0" max="100" step="0.1" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="tax-block">
+                <h3>🧾 Налоги</h3>
+                <p class="hint">Отметь, какие налоги ты платишь</p>
+                
+                <div class="tax-grid">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="tax_rev_enable">
+                            Налог "с денег от клиентов" (% от продаж)
+                            <span class="tooltip" data-tooltip="Например, налог с оборота (часто 1–10% в зависимости от режима)">?</span>
+                        </label>
+                        <input type="number" id="tax_rev_pct" min="0" max="100" step="0.1" placeholder="6" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="tax_profit_enable">
+                            Налог "с того, что осталось" (% от прибыли)
+                            <span class="tooltip" data-tooltip="Обычно это налог на прибыль">?</span>
+                        </label>
+                        <input type="number" id="tax_profit_pct" min="0" max="100" step="0.1" placeholder="20" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="fixed_tax_enable">
+                            Фиксированный налог/взносы (₽)
+                            <span class="tooltip" data-tooltip="Например, страховые взносы ИП">?</span>
+                        </label>
+                        <div class="fixed-tax-row">
+                            <input type="number" id="fixed_tax_amount" min="0" step="0.01" placeholder="5000" disabled>
+                            <select id="fixed_tax_period" disabled>
+                                <option value="month">в месяц</option>
+                                <option value="quarter">в квартал</option>
+                                <option value="year">в год</option>
+                            </select>
+                        </div>
+                        <p class="tax-hint">
+                            Даже если налог платится раз в квартал или год, здесь мы считаем его как среднюю нагрузку в месяц, чтобы было понятно, как он давит на бизнес.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-block" id="step1_result">
+                <div class="main-indicator">
+                    <div class="big-number main-number">
+                        <span id="left_per_sale">0</span> ₽
+                    </div>
+                    <p class="main-label">С одной продажи остаётся</p>
+                    <p class="main-hint">Это главный показатель. Все остальные расчёты зависят от него.</p>
+                </div>
+                
+                <div class="breakdown">
+                    <h4>Куда уходят деньги с одной продажи:</h4>
+                    <div id="expenses_breakdown"></div>
+                </div>
+
+                <div class="warning critical" id="step1_warning" style="display: none;">
+                    <h4>⚠️ Критическая проблема</h4>
+                    <p>При таких цифрах каждая продажа не приносит денег.</p>
+                    <p>Бизнес не может выйти в плюс ни при каком объёме продаж.</p>
+                    <p><strong>Нужно менять цену или расходы.</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ШАГ 2: ОБЯЗАТЕЛЬНЫЕ РАСХОДЫ -->
+        <div id="step2" class="tab-content">
+            <h2>Шаг 2: Обязательные расходы каждый месяц</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="rent">Аренда (₽/мес) <span class="tooltip" data-tooltip="Офис, склад, магазин">?</span></label>
+                    <input type="number" id="rent" min="0" step="0.01" placeholder="30000">
+                </div>
+
+                <div class="form-group">
+                    <label for="salaries">Зарплаты (₽/мес) <span class="tooltip" data-tooltip="Сотрудники и ты сам">?</span></label>
+                    <input type="number" id="salaries" min="0" step="0.01" placeholder="50000">
+                </div>
+
+                <div class="form-group">
+                    <label for="advertising">Реклама (фикс) (₽/мес) <span class="tooltip" data-tooltip="Аренда баннеров, подписка на сервисы">?</span></label>
+                    <input type="number" id="advertising" min="0" step="0.01" placeholder="10000">
+                </div>
+
+                <div class="form-group">
+                    <label for="services">Сервисы/интернет/связь (₽/мес) <span class="tooltip" data-tooltip="Хостинг, CRM, телефония">?</span></label>
+                    <input type="number" id="services" min="0" step="0.01" placeholder="5000">
+                </div>
+
+                <div class="form-group">
+                    <label for="credit">Кредит/лизинг (₽/мес) <span class="tooltip" data-tooltip="Выплаты по кредитам и лизингу">?</span></label>
+                    <input type="number" id="credit" min="0" step="0.01" placeholder="15000">
+                </div>
+
+                <div class="form-group">
+                    <label for="other">Прочие обязательные (₽/мес) <span class="tooltip" data-tooltip="Всё остальное, без чего не работает">?</span></label>
+                    <input type="number" id="other" min="0" step="0.01" placeholder="5000">
+                </div>
+            </div>
+
+            <div class="result-block" id="step2_result">
+                <div class="big-number">
+                    Каждый месяц нужно: <span id="fixed_monthly">0</span> ₽
+                </div>
+                <div id="fixed_breakdown" class="breakdown"></div>
+            </div>
+        </div>
+
+        <!-- ШАГ 3: ЦЕЛИ -->
+        <div id="step3" class="tab-content">
+            <h2>Шаг 3: Проверка реальности</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="target_profit">Хочу зарабатывать (чистыми) (₽/мес) <span class="tooltip" data-tooltip="После всех расходов и налогов">?</span></label>
+                    <input type="number" id="target_profit" min="0" step="0.01" placeholder="100000">
+                </div>
+
+                <div class="form-group">
+                    <label for="current_sales_type">Сейчас продаю <span class="tooltip" data-tooltip="Текущий объём продаж">?</span></label>
+                    <select id="current_sales_type">
+                        <option value="month">в месяц</option>
+                        <option value="day">в день</option>
+                    </select>
+                    <input type="number" id="current_sales" min="0" step="1" placeholder="50">
+                </div>
+            </div>
+
+            <div class="result-block" id="step3_result">
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h4>Чтобы НЕ быть в минусе</h4>
+                        <div class="big-number-small">Нужно продавать: <span id="break_even_sales">0</span> /мес</div>
+                    </div>
+
+                    <div class="result-item">
+                        <h4>Чтобы зарабатывать <span id="target_display">0</span> ₽</h4>
+                        <div class="big-number-small">Нужно продавать: <span id="target_sales">0</span> /мес</div>
+                    </div>
+
+                    <div class="result-item">
+                        <h4>При текущих продажах (<span id="current_display">0</span> /мес)</h4>
+                        <div class="big-number-small">
+                            <span id="current_profit">0</span> ₽
+                            <span id="profit_status" class="status-badge"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-block">
+                    <h4>Сценарии по продажам (от текущего объёма)</h4>
+                    <div class="scenario-grid">
+                        <div class="scenario-item negative">
+                            <div class="scenario-title">Плохо (−30%)</div>
+                            <div class="scenario-value"><span id="sc_profit_bad">0</span> ₽</div>
+                        </div>
+                        <div class="scenario-item zero">
+                            <div class="scenario-title">База (как сейчас)</div>
+                            <div class="scenario-value"><span id="sc_profit_base">0</span> ₽</div>
+                        </div>
+                        <div class="scenario-item positive">
+                            <div class="scenario-title">Хорошо (+30%)</div>
+                            <div class="scenario-value"><span id="sc_profit_good">0</span> ₽</div>
+                        </div>
+                    </div>
+                    <p class="hint">Меняешь «Сейчас продаю» — сценарии пересчитаются автоматически.</p>
+                </div>
+
+                <div class="diagnosis">
+                    <h4>Диагноз бизнеса</h4>
+                    <p id="main_expense">Главный пожиратель денег: </p>
+                </div>
+
+                <div class="warning" id="step3_warning" style="display: none;">
+                    <p>⚠️ Бизнес математически не взлетает - каждая продажа убыточна!</p>
+                    <p>Нужно:</p>
+                    <ul>
+                        <li>Поднять цену</li>
+                        <li>Снизить закупочную стоимость</li>
+                        <li>Уменьшить комиссии или расходы на доставку</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- КАРТА: ГДЕ "ТЕЧЁТ" -->
+        <div id="treemap" class="tab-content">
+            <h2>🧩 Где течёт (карта)</h2>
+            <p class="hint">Квадраты показывают, какие статьи забирают больше всего денег. Чем больше квадрат — тем сильнее он давит.</p>
+
+            <div class="treemap-controls">
+                <button id="treemap_mode_per_sale" class="btn-secondary active">На 1 продажу</button>
+                <button id="treemap_mode_per_month" class="btn-secondary">В месяц (по текущим продажам)</button>
+            </div>
+
+            <div class="treemap-wrapper">
+                <div id="treemap_container" class="treemap"></div>
+            </div>
+
+            <div class="treemap-legend">
+                <div class="legend-item"><span class="legend-swatch expense"></span> Расходы</div>
+                <div class="legend-item"><span class="legend-swatch tax"></span> Налоги/потери</div>
+                <div class="legend-item"><span class="legend-swatch profit"></span> Тебе остаётся</div>
+            </div>
+
+            <div id="treemap_note" class="hint"></div>
+
+            <div class="treemap-list">
+                <h3>Точные цифры</h3>
+                <div id="treemap_list" class="treemap-list-items"></div>
+                <div class="hint" style="margin-top:8px;">Если квадрат маленький — наведи (или тапни) на него: будет подсказка с точными значениями.</div>
+            </div>
+
+        </div>
+
+        <!-- ГРАФИКИ -->
+        <div id="charts" class="tab-content">
+            <h2>📊 Визуализация</h2>
+            
+            <div class="chart-controls">
+                <div class="form-group">
+                    <label for="chart_period">Период:</label>
+                    <select id="chart_period">
+                        <option value="month">1 месяц</option>
+                        <option value="quarter">3 месяца (квартал)</option>
+                        <option value="year">12 месяцев (год)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="chart_sales">Продаж в месяц: <span id="chart_sales_value">0</span></label>
+                    <input type="range" id="chart_sales" min="0" max="1000" step="1" value="0">
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Куда уходят деньги с одной продажи</h3>
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Доходы и расходы по периоду</h3>
+                    <p class="chart-hint">Для простоты расчёта считаем, что продажи одинаковые каждый месяц.</p>
+                    <canvas id="periodChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>💾 Все данные сохраняются автоматически</p>
+            <p class="hint">Закрой и открой страницу - всё останется на месте</p>
+        </footer>
+    </div>
+
+    <script src="lib/chart.umd.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

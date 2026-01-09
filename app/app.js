@@ -4,6 +4,10 @@ class BusinessCalculator {
         this.charts = {};
         this.treemapMode = 'per_sale';
         this.breakdownMode = 'per_sale';
+        // Слайдер "Продаж в месяц" в блоке графиков:
+        // по умолчанию синхронизируем с рассчитанным планом продаж,
+        // но если пользователь меняет его вручную — перестаём перетирать ввод.
+        this.chartSalesUserSet = false;
         this.init();
     }
 
@@ -69,11 +73,57 @@ class BusinessCalculator {
             document.getElementById('fixed_tax_period').disabled = !e.target.checked;
         });
 
-        // Ползунок графиков
-        document.getElementById('chart_sales').addEventListener('input', (e) => {
-            document.getElementById('chart_sales_value').textContent = e.target.value;
-            this.updateCharts();
-        });
+        // Ползунок графиков (ползунок + ручной ввод)
+        const chartSales = document.getElementById('chart_sales');
+        const chartSalesInput = document.getElementById('chart_sales_input');
+
+        if (chartSales && chartSalesInput) {
+            const syncSales = (val) => {
+                const min = parseInt(chartSales.min || '0', 10);
+                const max = parseInt(chartSales.max || '1000000', 10);
+                let v = parseInt(val, 10);
+                if (isNaN(v)) v = 0;
+                v = Math.max(min, Math.min(max, v));
+                chartSales.value = String(v);
+                chartSalesInput.value = String(v);
+            };
+
+            chartSales.addEventListener('input', (e) => {
+                this.chartSalesUserSet = true;
+                syncSales(e.target.value);
+                this.updateCharts();
+            });
+
+            // Удобнее вводить руками на мобиле:
+            // - даём стереть значение (пустая строка) без мгновенной подстановки 0
+            // - приводим к числу на blur/change
+            chartSalesInput.addEventListener('focus', (e) => {
+                // На некоторых мобилках select() может не сработать — не критично.
+                try { e.target.select(); } catch (_) {}
+            });
+
+            chartSalesInput.addEventListener('input', (e) => {
+                this.chartSalesUserSet = true;
+                const raw = String(e.target.value);
+                if (raw.trim() === '') return;
+                syncSales(raw);
+                this.updateCharts();
+            });
+
+            chartSalesInput.addEventListener('change', (e) => {
+                this.chartSalesUserSet = true;
+                syncSales(e.target.value);
+                this.updateCharts();
+            });
+
+            chartSalesInput.addEventListener('blur', (e) => {
+                this.chartSalesUserSet = true;
+                const raw = String(e.target.value).trim();
+                syncSales(raw === '' ? '0' : raw);
+                this.updateCharts();
+            });
+        }
+
 
         // Переключатель периода графиков
         document.getElementById('chart_period').addEventListener('change', () => {
@@ -566,9 +616,19 @@ class BusinessCalculator {
         }
         
         // Обновить ползунок графиков
-        document.getElementById('chart_sales').value = current_sales_monthly;
-        document.getElementById('chart_sales_value').textContent = current_sales_monthly;
+        // По умолчанию (пока пользователь не трогал вручную) держим графики
+        // синхронизированными с рассчитанным планом продаж.
+        // Если пользователь начал вводить руками — НЕ перетираем его число.
+        if (!this.chartSalesUserSet) {
+            const cs = document.getElementById('chart_sales');
+            if (cs) cs.value = current_sales_monthly;
+            const csi = document.getElementById('chart_sales_input');
+            if (csi) csi.value = current_sales_monthly;
+            const csv = document.getElementById('chart_sales_value');
+            if (csv) csv.textContent = current_sales_monthly;
+        }
 
+        
         // Партия (если подключён модуль)
         if (typeof this.calculateBatch === 'function') {
             this.calculateBatch(data);

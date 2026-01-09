@@ -131,7 +131,7 @@
                         <label>
                             <input type="checkbox" id="tax_rev_enable">
                             Налог "с денег от клиентов" (% от продаж)
-                            <span class="tooltip" data-tooltip="Налог с оборота (например УСН Доходы). Считаем от цены товара/услуги. Если доставка оплачивается отдельно — она не включается.">?</span>
+                            <span class="tooltip" data-tooltip="Налог с оборота (пример: УСН 'Доходы' 6%). Считаем % от цены, которую платит клиент за товар/услугу. Если доставку клиент оплачивает отдельно — её сюда не включай. НДС здесь не моделируем (это отдельный режим расчёта).">?</span>
                         </label>
                         <input type="number" id="tax_rev_pct" min="0" max="100" step="0.1" placeholder="6" disabled>
                     </div>
@@ -140,7 +140,7 @@
                         <label>
                             <input type="checkbox" id="tax_profit_enable">
                             Налог "с того, что осталось" (% от прибыли)
-                            <span class="tooltip" data-tooltip="Налог на прибыль. Считаем от прибыли в месяц (после расходов). Если не платишь — выключи.">?</span>
+                            <span class="tooltip" data-tooltip="Налог на прибыль: % от того, что осталось после всех расходов. Обычно применим для ООО/ОСНО и т.п. Если у тебя только УСН с оборота — этот пункт выключи. НДС здесь не учитывается.">?</span>
                         </label>
                         <input type="number" id="tax_profit_pct" min="0" max="100" step="0.1" placeholder="20" disabled>
                     </div>
@@ -149,7 +149,7 @@
                         <label>
                             <input type="checkbox" id="fixed_tax_enable">
                             Фиксированный налог/взносы (₽)
-                            <span class="tooltip" data-tooltip="Фиксированные платежи: взносы ИП, патент, обязательные сборы. Если платишь раз в год/квартал — выбери период ниже.">?</span>
+                            <span class="tooltip" data-tooltip="Фиксированные платежи: взносы ИП, патент, обязательные сборы. Если платишь раз в год/квартал — выбери период ниже, калькулятор размажет на месяц для понимания нагрузки.">?</span>
                         </label>
                         <div class="fixed-tax-row">
                             <input type="number" id="fixed_tax_amount" min="0" step="0.01" placeholder="5000" disabled>
@@ -397,10 +397,19 @@
             </div>
 
             <div class="charts-grid">
-                <div class="chart-container">
-                    <h3>Куда уходят деньги с одной продажи</h3>
-                    <canvas id="breakdownChart"></canvas>
+        <div class="chart-container">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                <h3 id="breakdown_title" style="margin:0;">Куда уходят деньги (на 1 продажу)</h3>
+                <div class="mode-switch" style="display:flex; gap:8px;">
+                    <button id="breakdown_mode_per_sale" class="btn-secondary active" type="button">На 1 продажу</button>
+                    <button id="breakdown_mode_per_month" class="btn-secondary" type="button">В месяц (N продаж)</button>
                 </div>
+            </div>
+            <div class="small-note" style="margin-top:6px; opacity:0.85;">
+                Это «водопад»: стартуем от <b>цены</b> и пошагово вычитаем статьи, чтобы увидеть, где «утекают» деньги.
+            </div>
+            <canvas id="breakdownChart"></canvas>
+        </div>
 
                 <div class="chart-container">
                     <h3>Доходы и расходы по периоду</h3>

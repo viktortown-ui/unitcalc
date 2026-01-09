@@ -186,6 +186,10 @@ header h1 {
 }
 
 .tab-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     padding: 12px 24px;
     border: none;
     background: var(--bg-secondary);

@@ -141,17 +141,19 @@ class BusinessCalculator {
         const contents = document.querySelectorAll('.tab-content');
 
         tabs.forEach(tab => {
+            const targetTab = tab.getAttribute('data-tab');
+            if (!targetTab) return; // например, ссылка на отдельную страницу
+
             tab.addEventListener('click', () => {
-                const targetTab = tab.getAttribute('data-tab');
-                
                 // Переключить активную вкладку
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
+
                 // Переключить контент
                 contents.forEach(c => c.classList.remove('active'));
-                document.getElementById(targetTab).classList.add('active');
-                
+                const targetEl = document.getElementById(targetTab);
+                if (targetEl) targetEl.classList.add('active');
+
                 // Обновить графики если открыта вкладка графиков
                 if (targetTab === 'charts') {
                     setTimeout(() => this.updateCharts(), 100);
@@ -203,7 +205,9 @@ class BusinessCalculator {
             // Шаг 3
             target_profit: this.getFloat('target_profit'),
             current_sales_type: document.getElementById('current_sales_type').value,
-            current_sales: this.getInt('current_sales')
+            current_sales: this.getInt('current_sales'),
+            batch_qty: this.getInt('batch_qty'),
+            batch_months: this.getInt('batch_months')
         };
 
         // Ограничители, чтобы проценты не уезжали в космос
@@ -215,6 +219,9 @@ class BusinessCalculator {
         }
 
         data.mp_discount_pct = this.clamp(data.mp_discount_pct, 0, 100);
+
+        // Партия: срок не может быть 0
+        data.batch_months = Math.max(1, data.batch_months || 1);
 
         return data;
     }
@@ -541,6 +548,11 @@ class BusinessCalculator {
         // Обновить ползунок графиков
         document.getElementById('chart_sales').value = current_sales_monthly;
         document.getElementById('chart_sales_value').textContent = current_sales_monthly;
+
+        // Партия (если подключён модуль)
+        if (typeof this.calculateBatch === 'function') {
+            this.calculateBatch(data);
+        }
     }
 
     findSalesForTarget(target) {

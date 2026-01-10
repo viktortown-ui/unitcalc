@@ -342,9 +342,8 @@ class BusinessCalculator {
         
         // Доставка
         if (!data.shipping_transit) {
-            if (!data.shipping_transit) {
             expenses.push({ label: 'Доставка/логистика', value: data.shipping });
-        }} else if (data.shipping > 0) {
+        } else if (data.shipping > 0) {
             // Транзитная доставка: клиент платит отдельно, не влияет на прибыль/налоги
             infoItems.push({ label: 'Доставка (оплачивает клиент отдельно)', value: data.shipping });
         }
@@ -664,7 +663,7 @@ class BusinessCalculator {
         const perSale = [
             { label: 'Закуп/материалы (на 1 продажу)', value: data.unit_cost },
             { label: 'Комиссии (на 1 продажу)', value: commission_amount },
-            { label: 'Доставка (на 1 продажу)', value: data.shipping },
+            { label: data.shipping_transit ? 'Доставка (оплачивает клиент отдельно)' : 'Доставка (на 1 продажу)', value: data.shipping_transit ? 0 : data.shipping },
             { label: 'Упаковка (на 1 продажу)', value: data.packing },
             { label: 'Фулфилмент (на 1 продажу)', value: data.mp_fulfillment },
             { label: 'Хранение/площадка (на 1 продажу)', value: data.mp_storage },

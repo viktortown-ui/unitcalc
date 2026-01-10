@@ -1561,7 +1561,8 @@ el.title = `${i.label}: ${this.formatNumber(i.value)} ₽ (${pct.toFixed(1)}%)`;
                     } else if (element.tagName === 'SELECT') {
                         element.value = data[key];
                     } else {
-                        element.value = data[key] || '';
+                        // ВАЖНО: не используем "|| ''", иначе 0 (ноль) теряется при восстановлении.
+                        element.value = (data[key] ?? '');
                     }
                 }
                 

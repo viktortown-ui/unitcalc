@@ -432,5 +432,24 @@
     <script src="lib/chart.umd.js"></script>
     <script src="app.js"></script>
     <script src="modules/batch.js"></script>
+
+<script>
+  // Offline-first for repeat visits (caches app shell)
+  (function() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').catch(function(){});
+      });
+    }
+    // If we are offline at first paint, show offline screen (works when the page itself is loaded)
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      try { window.location.replace('offline.html'); } catch (e) {}
+    }
+    window.addEventListener('offline', function() {
+      try { window.location.href = 'offline.html'; } catch (e) {}
+    });
+  })();
+</script>
+
 </body>
 </html>

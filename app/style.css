@@ -63,16 +63,16 @@ body {
 /* HEADER */
 header {
     text-align: center;
-    margin-bottom: 40px;
-    padding: 30px 0;
+    margin-bottom: 24px;
+    padding: 18px 0;
     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: var(--shadow);
 }
 
 header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
     background: linear-gradient(135deg, var(--accent), var(--accent-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -81,15 +81,15 @@ header h1 {
 
 .subtitle {
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 1.0rem;
 }
 
 
 /* TOPBAR (presets + export/import/print) */
 .topbar {
-    margin-top: 18px;
+    margin-top: 12px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
@@ -390,7 +390,9 @@ header h1 {
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 0.85rem;
-    white-space: nowrap;
+    max-width: min(320px, 80vw);
+    white-space: normal;
+    text-align: left;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -1008,4 +1010,70 @@ footer p {
     background: rgba(245, 158, 11, 0.12);
     border: 1px solid rgba(245, 158, 11, 0.35);
     color: var(--text-primary);
+}
+
+/* TOOLTIP: tap-to-open support (mobile) */
+.tooltip.open::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (hover: none) {
+    .tooltip { cursor: pointer; }
+
+    /* On touch devices :hover can "stick" after a tap.
+       We suppress hover, but MUST allow the explicit .open state to show. */
+    .tooltip:hover::after {
+        opacity: 0;
+        visibility: hidden;
+    }
+    .tooltip.open::after {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+@media (max-width: 768px) {
+    .tooltip {
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+        font-size: 0.8rem;
+    }
+}
+
+/* HEADER: extra compact on mobile */
+@media (max-width: 768px) {
+    header {
+        padding: 14px 0;
+        margin-bottom: 18px;
+    }
+    header h1 {
+        font-size: 1.8rem;
+    }
+    .topbar {
+        margin-top: 10px;
+    }
+}
+
+/* HOME FAB (floating "go to start" button) */
+.home-fab{
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 9999;
+    padding: 10px 12px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 800;
+    line-height: 1;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+.home-fab:active{ transform: scale(0.98); }
+
+@media (max-width: 768px){
+    .home-fab{ right: 12px; bottom: 12px; padding: 10px 12px; }
 }

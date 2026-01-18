@@ -3,7 +3,7 @@ class BusinessCalculator {
     constructor() {
         this.charts = {};
         this.treemapMode = 'per_sale';
-        this.breakdownMode = 'per_sale';
+        this.breakdownMode = 'per_month';
         // Слайдер "Продаж в месяц" в блоке графиков:
         // по умолчанию синхронизируем с рассчитанным планом продаж,
         // но если пользователь меняет его вручную — перестаём перетирать ввод.
@@ -13,6 +13,7 @@ class BusinessCalculator {
 
     init() {
         this.setupEventListeners();
+        this.initTooltipsMobile();
         this.setupTabs();
         // Если пришли по ссылке "Поделиться" — берём данные из URL.
         const loadedFromShare = this.tryLoadFromShareHash();
@@ -245,6 +246,7 @@ class BusinessCalculator {
             commissions_type: document.getElementById('commissions_type').value,
             commissions: this.getFloat('commissions'),
             shipping: this.getFloat('shipping'),
+            ad_per_sale: this.getFloat('ad_per_sale'),
             shipping_transit: (document.getElementById('shipping_transit') ? document.getElementById('shipping_transit').checked : false),
             packing: this.getFloat('packing'),
             loss_pct: this.getFloat('loss_pct'),
@@ -297,12 +299,18 @@ class BusinessCalculator {
     }
 
     getFloat(id) {
-        const val = parseFloat(document.getElementById(id).value) || 0;
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        // Поддержка ввода с запятой (русская клавиатура)
+        const raw = (el.value ?? '').toString().replace(',', '.');
+        const val = parseFloat(raw) || 0;
         return Math.max(0, val);
     }
 
     getInt(id) {
-        const val = parseInt(document.getElementById(id).value) || 0;
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        const val = parseInt((el.value ?? '').toString(), 10) || 0;
         return Math.max(0, val);
     }
 
@@ -348,7 +356,12 @@ class BusinessCalculator {
             infoItems.push({ label: 'Доставка (оплачивает клиент отдельно)', value: data.shipping });
         }
 
-// Упаковка
+        // Реклама (CAC)
+        if ((data.ad_per_sale || 0) > 0) {
+            expenses.push({ label: 'Реклама (CAC)', value: data.ad_per_sale });
+        }
+
+        // Упаковка
         expenses.push({ label: 'Упаковка/расходники', value: data.packing });
 
         // Маркетплейсы (доп. поля)
@@ -663,6 +676,7 @@ class BusinessCalculator {
         const perSale = [
             { label: 'Закуп/материалы (на 1 продажу)', value: data.unit_cost },
             { label: 'Комиссии (на 1 продажу)', value: commission_amount },
+            { label: 'Реклама (CAC) (на 1 продажу)', value: data.ad_per_sale || 0 },
             { label: data.shipping_transit ? 'Доставка (оплачивает клиент отдельно)' : 'Доставка (на 1 продажу)', value: data.shipping_transit ? 0 : data.shipping },
             { label: 'Упаковка (на 1 продажу)', value: data.packing },
             { label: 'Фулфилмент (на 1 продажу)', value: data.mp_fulfillment },
@@ -690,6 +704,29 @@ class BusinessCalculator {
 
         document.getElementById('main_expense').innerHTML =
             'Главный пожиратель денег: ' + (parts.length ? parts.join(' • ') : '<strong>нет данных</strong>');
+    }
+
+
+
+    initTooltipsMobile() {
+        // На мобильных hover нет — делаем "тап-открыть".
+        const tips = Array.from(document.querySelectorAll('.tooltip'));
+        if (!tips.length) return;
+
+        const closeAll = () => tips.forEach(t => t.classList.remove('open'));
+
+        tips.forEach(t => {
+            t.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const willOpen = !t.classList.contains('open');
+                closeAll();
+                if (willOpen) t.classList.add('open');
+            });
+        });
+
+        document.addEventListener('click', closeAll);
+        window.addEventListener('scroll', closeAll, { passive: true });
     }
 
     // ГРАФИКИ
@@ -771,135 +808,167 @@ class BusinessCalculator {
             }
         });
 
-        // График по периоду
-        const ctx2 = document.getElementById('periodChart').getContext('2d');
-        this.charts.period = new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'Деньги от клиентов',
-                        data: [],
-                        backgroundColor: '#3b82f6',
-                        borderWidth: 0
+        // График по периоду (опционально: если canvas есть)
+        const periodCanvas = document.getElementById('periodChart');
+        if (periodCanvas) {
+            const ctx2 = periodCanvas.getContext('2d');
+            this.charts.period = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Деньги от клиентов',
+                            data: [],
+                            backgroundColor: '#3b82f6',
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Все расходы',
+                            data: [],
+                            backgroundColor: '#ef4444',
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Налоги',
+                            data: [],
+                            backgroundColor: '#f59e0b',
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Тебе остаётся',
+                            data: [],
+                            backgroundColor: '#10b981',
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ₽`
+                            }
+                        }
                     },
-                    {
-                        label: 'Все расходы',
-                        data: [],
-                        backgroundColor: '#ef4444',
-                        borderWidth: 0
-                    },
-                    {
-                        label: 'Налоги',
-                        data: [],
-                        backgroundColor: '#f59e0b',
-                        borderWidth: 0
-                    },
-                    {
-                        label: 'Тебе остаётся',
-                        data: [],
-                        backgroundColor: '#10b981',
-                        borderWidth: 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#f8fafc' }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ₽`
+                    scales: {
+                        x: {
+                            ticks: { color: '#cbd5e1' },
+                            grid: { color: '#475569' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#cbd5e1',
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' ₽';
+                                }
+                            },
+                            grid: { color: '#475569' }
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#cbd5e1' },
-                        grid: { color: '#475569' }
-                    },
-                    y: {
-                        ticks: {
-                            color: '#cbd5e1',
-                            callback: function(value) {
-                                return value.toLocaleString() + ' ₽';
-                            }
-                        },
-                        grid: { color: '#475569' }
-                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     updateCharts() {
         // Если графики не инициализированы — выходим (например, если Chart.js отсутствует)
-        if (!this.charts || !this.charts.breakdown || !this.charts.period) return;
+        if (!this.charts || !this.charts.breakdown) return;
 
         const data = this.getFormData();
-        const sales_per_month = parseInt(document.getElementById('chart_sales').value) || 0;
-        const period = document.getElementById('chart_period').value;
-        
-        // Обновить график распределения
-        this.updateBreakdownChart(data, sales_per_month);
-        
-        // Обновить график по периоду
-        this.updatePeriodChart(data, sales_per_month, period);
+        const sales_per_month = parseInt(document.getElementById('chart_sales')?.value) || 0;
+        const period = document.getElementById('chart_period')?.value || 'month';
+
+        // Водопад
+        this.updateBreakdownChart(data, sales_per_month, period);
+
+        // График по периоду — опционально (если canvas существует)
+        if (this.charts.period) {
+            this.updatePeriodChart(data, sales_per_month, period);
+        }
     }
 
-    updateBreakdownChart(data, sales_per_month) {
-        // multiplier: на 1 продажу или в месяц (N продаж)
-        const mult = (this.breakdownMode === 'per_month') ? (sales_per_month || 0) : 1;
+    
+    updateBreakdownChart(data, sales_per_month, period) {
+        const periods = { month: 1, quarter: 3, year: 12 };
+        const months = periods[period] || 1;
+
+        // режим: на 1 продажу (как раньше) или за период (продажи/мес * период)
+        const isPerSale = (this.breakdownMode === 'per_sale');
+        const units = isPerSale ? 1 : ((sales_per_month || 0) * months);
 
         const titleEl = document.getElementById('breakdown_title');
         if (titleEl) {
-            titleEl.textContent = (this.breakdownMode === 'per_month')
-                ? `Куда уходят деньги (в месяц при ${sales_per_month || 0} продажах)`
-                : 'Куда уходят деньги (на 1 продажу)';
+            titleEl.textContent = isPerSale
+                ? 'Куда уходят деньги (на 1 продажу)'
+                : `Куда уходят деньги (за ${months} мес при ${sales_per_month || 0} продаж/мес)`;
         }
 
-        const price = (data.price || 0) * mult;
-        const remain = (this.leftPerSale || 0) * mult;
+        const revenue = (data.price || 0) * units;
 
-        // Расходы "на продажу" берём из общей функции, дальше просто умножаем
+        // Переменные расходы/налоги на продажу -> за период
         const perSaleExpenses = this.getPerSaleExpenses(data);
-        const expenses = perSaleExpenses.map(e => ({
-            key: e.key,
-            label: e.label,
-            value: (e.value || 0) * mult,
-            type: e.type
-        })).filter(e => e.value > 0);
+        const varItems = perSaleExpenses
+            .map(e => ({
+                label: e.label,
+                value: (e.value || 0) * units,
+                type: e.type || 'expense'
+            }))
+            .filter(e => (e.value || 0) > 0);
 
-        // Водопад: [0 -> price] затем вычитаем статьи, в конце показываем остаток
+        // Фиксированные расходы и налог на прибыль — только в режиме "за период"
+        const fixedTotal = isPerSale ? 0 : (Number(this.fixedMonthly) || 0) * months;
+        const profitBeforeTax = isPerSale ? 0 : (units * (Number(this.leftPerSale) || 0) - (Number(this.fixedMonthly) || 0) * months);
+        const profitTax = isPerSale ? 0 : (Math.max(0, profitBeforeTax) * (Number(this.taxProfitPct) || 0) / 100);
+
         const labels = [];
         const ranges = [];
         const colors = [];
 
-        let cur = 0;
-        // 1) Цена
-        labels.push('Цена (платит клиент)');
-        ranges.push([0, price]);
+        // 1) Выручка
+        labels.push(isPerSale ? 'Цена (платит клиент)' : 'Выручка (за период)');
+        ranges.push([0, revenue]);
         colors.push('#3b82f6');
-        cur = price;
 
-        // 2) Статьи расходов/налогов
-        for (const e of expenses) {
+        let cur = revenue;
+
+        // 2) Переменные статьи
+        for (const e of varItems) {
             const next = cur - e.value;
             labels.push(e.label);
             ranges.push([cur, next]);
-            // расходы красные, налоги/потери — оранжевые
             colors.push(e.type === 'tax' ? '#f59e0b' : '#ef4444');
             cur = next;
         }
 
-        // 3) Итог: тебе остаётся (от нуля)
-        labels.push('Тебе остаётся');
-        ranges.push([0, Math.max(0, remain)]);
-        colors.push('#10b981');
+        // 3) Фикс. расходы
+        if (!isPerSale && fixedTotal > 0) {
+            const next = cur - fixedTotal;
+            labels.push('Фикс. расходы (за период)');
+            ranges.push([cur, next]);
+            colors.push('#ef4444');
+            cur = next;
+        }
+
+        // 4) Налог на прибыль
+        if (!isPerSale && profitTax > 0) {
+            const next = cur - profitTax;
+            labels.push('Налог на прибыль');
+            ranges.push([cur, next]);
+            colors.push('#f59e0b');
+            cur = next;
+        }
+
+        // 5) Итог
+        const finalLabel = isPerSale ? 'Тебе остаётся' : (cur >= 0 ? 'Тебе остаётся (за период)' : 'Минус (за период)');
+        labels.push(finalLabel);
+        ranges.push([0, cur]);
+        colors.push(cur >= 0 ? '#10b981' : '#ef4444');
 
         // Прокинем цвета в chart instance, чтобы backgroundColor мог их читать
         this.charts.breakdown.$waterfallMeta = { colors };
@@ -1373,29 +1442,39 @@ el.title = `${i.label}: ${this.formatNumber(i.value)} ₽ (${pct.toFixed(1)}%)`;
 
     getPerSaleExpenses(data) {
         const expenses = [];
-        expenses.push({ label: 'Стоимость товара/услуги', value: data.unit_cost });
+
+        expenses.push({ key: 'unit_cost', label: 'Стоимость товара/услуги', value: data.unit_cost, type: 'expense' });
 
         const commission_amount = data.commissions_type === 'percent'
             ? data.price * data.commissions / 100
             : data.commissions;
-        expenses.push({ label: 'Комиссии', value: commission_amount });
+        expenses.push({ key: 'commissions', label: 'Комиссии', value: commission_amount, type: 'expense' });
 
-        expenses.push({ label: 'Доставка/логистика', value: data.shipping });
-        expenses.push({ label: 'Упаковка/расходники', value: data.packing });
+        // Доставка: если "транзит" (клиент платит отдельно) — НЕ считаем как расход
+        if (!data.shipping_transit) {
+            expenses.push({ key: 'shipping', label: 'Доставка/логистика', value: data.shipping, type: 'expense' });
+        }
 
-        if (data.mp_fulfillment > 0) expenses.push({ label: 'Фулфилмент/сборка', value: data.mp_fulfillment });
-        if (data.mp_storage > 0) expenses.push({ label: 'Хранение/услуги площадки', value: data.mp_storage });
-        if (data.mp_lastmile > 0) expenses.push({ label: 'Последняя миля/доставка МП', value: data.mp_lastmile });
+        // Реклама на 1 продажу (CAC)
+        if ((data.ad_per_sale || 0) > 0) {
+            expenses.push({ key: 'ad_per_sale', label: 'Реклама (CAC)', value: data.ad_per_sale, type: 'expense' });
+        }
+
+        expenses.push({ key: 'packing', label: 'Упаковка/расходники', value: data.packing, type: 'expense' });
+
+        if (data.mp_fulfillment > 0) expenses.push({ key: 'mp_fulfillment', label: 'Фулфилмент/сборка', value: data.mp_fulfillment, type: 'expense' });
+        if (data.mp_storage > 0) expenses.push({ key: 'mp_storage', label: 'Хранение/услуги площадки', value: data.mp_storage, type: 'expense' });
+        if (data.mp_lastmile > 0) expenses.push({ key: 'mp_lastmile', label: 'Последняя миля/доставка МП', value: data.mp_lastmile, type: 'expense' });
 
         const discount_amount = data.price * data.mp_discount_pct / 100;
-        if (discount_amount > 0) expenses.push({ label: 'Скидки/акции', value: discount_amount });
+        if (discount_amount > 0) expenses.push({ key: 'discount', label: 'Скидки/акции', value: discount_amount, type: 'tax' });
 
         const loss_amount = data.price * data.loss_pct / 100;
-        if (loss_amount > 0) expenses.push({ label: 'Потери (возвраты/брак)', value: loss_amount });
+        if (loss_amount > 0) expenses.push({ key: 'loss', label: 'Потери (возвраты/брак)', value: loss_amount, type: 'tax' });
 
         if (data.tax_rev_enable && data.tax_rev_pct > 0) {
             const tax_rev_amount = data.price * data.tax_rev_pct / 100;
-            expenses.push({ label: 'Налог с продаж', value: tax_rev_amount });
+            expenses.push({ key: 'tax_rev', label: 'Налог с продаж', value: tax_rev_amount, type: 'tax' });
         }
         return expenses;
     }

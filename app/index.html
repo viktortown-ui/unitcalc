@@ -35,6 +35,7 @@
         </header>
 
         <nav class="tabs">
+            <a class="tab-button" href="../index.html">🏠 На старт</a>
             <button class="tab-button active" data-tab="step1">Шаг 1: Одна продажа</button>
             <button class="tab-button" data-tab="step2">Шаг 2: Обязательные расходы</button>
             <button class="tab-button" data-tab="step3">Шаг 3: Цели</button>
@@ -87,6 +88,11 @@
                 <div class="form-group">
                     <label for="packing">Упаковка/расходники на 1 продажу (₽) <span class="tooltip" data-tooltip="Коробка, плёнка, скотч, наклейки, вкладыши — одноразовое на 1 заказ.">?</span></label>
                     <input type="number" id="packing" min="0" step="0.01" placeholder="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="ad_per_sale">Реклама на 1 продажу (CAC, ₽) <span class="tooltip" data-tooltip="Сколько стоит привлечь 1 заказ: реклама, блогеры, трафик. Если не знаешь — поставь 0 или среднее за месяц / число продаж.">?</span></label>
+                    <input type="number" id="ad_per_sale" min="0" step="0.01" placeholder="0">
                 </div>
 
                 <div class="form-group">
@@ -403,23 +409,13 @@
             <div class="charts-grid">
         <div class="chart-container">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-                <h3 id="breakdown_title" style="margin:0;">Куда уходят деньги (на 1 продажу)</h3>
-                <div class="mode-switch" style="display:flex; gap:8px;">
-                    <button id="breakdown_mode_per_sale" class="btn-secondary active" type="button">На 1 продажу</button>
-                    <button id="breakdown_mode_per_month" class="btn-secondary" type="button">В месяц (N продаж)</button>
-                </div>
+                <h3 id="breakdown_title" style="margin:0;">Куда уходят деньги (водопад)</h3>
             </div>
             <div class="small-note" style="margin-top:6px; opacity:0.85;">
                 Это «водопад»: стартуем от <b>цены</b> и пошагово вычитаем статьи, чтобы увидеть, где «утекают» деньги.
             </div>
             <canvas id="breakdownChart"></canvas>
         </div>
-
-                <div class="chart-container">
-                    <h3>Доходы и расходы по периоду</h3>
-                    <p class="chart-hint">Для простоты расчёта считаем, что продажи одинаковые каждый месяц.</p>
-                    <canvas id="periodChart"></canvas>
-                </div>
             </div>
         </div>
 
@@ -449,6 +445,47 @@
       try { window.location.href = 'offline.html'; } catch (e) {}
     });
   })();
+</script>
+
+  <a class="home-fab" href="../index.html" aria-label="На старт">🏠</a>
+
+<script>
+(function () {
+  var isTouch = (window.matchMedia && window.matchMedia('(hover: none)').matches) || ('ontouchstart' in window);
+  if (!isTouch) return;
+
+  // Make tooltips focusable for accessibility
+  document.querySelectorAll('.tooltip').forEach(function (el) {
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'Подсказка');
+  });
+
+  function closeAll(except) {
+    document.querySelectorAll('.tooltip.open').forEach(function (el) {
+      if (!except || el !== except) el.classList.remove('open');
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('.tooltip') : null;
+    if (t) {
+      e.stopPropagation();
+      closeAll(t);
+      t.classList.toggle('open');
+      return;
+    }
+    closeAll();
+  });
+
+  // Close on scroll (mobile users scroll a lot)
+  window.addEventListener('scroll', function () { closeAll(); }, { passive: true });
+
+  // Close on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeAll();
+  });
+})();
 </script>
 
 </body>
